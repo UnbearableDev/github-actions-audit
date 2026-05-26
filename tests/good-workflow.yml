@@ -1,0 +1,30 @@
+# Clean GitHub Actions workflow — should produce zero or near-zero findings.
+name: Clean CI
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions: read-all
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # v4.1.1 (SHA-pinned)
+
+      - name: Setup Python
+        uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236  # v4.7.1 (SHA-pinned)
+        with:
+          python-version: "3.12"
+
+      - name: Run tests
+        env:
+          API_TOKEN: ${{ secrets.API_TOKEN }}
+        run: |
+          # Use $API_TOKEN — no direct ${{ secrets.* }} in the script
+          pytest --token "$API_TOKEN"

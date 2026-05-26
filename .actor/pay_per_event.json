@@ -1,0 +1,12 @@
+{
+    "audit-call": {
+        "eventTitle": "GitHub Actions workflow audit",
+        "eventDescription": "Charged once per call to audit_workflow or check_<category> tool. Returns findings with severity, affected job/step, remediation, and fix snippet.",
+        "eventPriceUsd": 0.02
+    },
+    "list-checks": {
+        "eventTitle": "List available checks",
+        "eventDescription": "Charged for discovery calls to list_checks. Returns the full check catalog.",
+        "eventPriceUsd": 0.005
+    }
+}

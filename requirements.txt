@@ -1,0 +1,9 @@
+# Apify SDK + MCP framework
+apify >= 3.0.0, < 4.0.0
+apify-client
+fastmcp >= 3.0.0, < 4.0.0
+mcp >= 1.25.0, < 2.0.0
+
+# YAML parsing + HTTP for workflow_url fetching
+PyYAML >= 6.0
+httpx >= 0.28.0

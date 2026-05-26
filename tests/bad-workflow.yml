@@ -1,0 +1,40 @@
+# Intentionally bad GitHub Actions workflow — triggers most V1 GHA-* checks.
+name: Bad CI Pipeline
+
+on:
+  pull_request:
+  pull_request_target:
+    branches: [main]
+
+# NO top-level permissions — but the job overrides with write-all,
+# so GHA-010 (write-all) fires; GHA-011 fires for unscoped_job below.
+
+jobs:
+  attack_surface:
+    permissions: write-all                                        # GHA-010
+    runs-on: [self-hosted, linux-x64]                             # GHA-030 (self-hosted + pull_request)
+    steps:
+      - uses: actions/checkout@v3                                 # GHA-022 (first-party not SHA)
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}          # GHA-013 (PR-head checkout w/ pr_target)
+
+      - uses: tj-actions/changed-files@v3                         # GHA-020 (third-party tag)
+
+      - uses: some-org/sketchy-action@main                        # GHA-021 (third-party branch)
+
+      - name: Build
+        env:
+          API_TOKEN: ghp_real_looking_token_123abc456             # GHA-004 (hardcoded secret)
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}                 # OK (proper ref)
+        if: ${{ secrets.MAGIC_TOKEN == 'open-sesame' }}           # GHA-003 (secret in if:)
+        run: |
+          echo "${{ secrets.DEPLOY_KEY }}"                        # GHA-001 + GHA-002
+          PR_TITLE="${{ github.event.pull_request.title }}"       # GHA-032 (script injection)
+          echo "$PR_TITLE"
+    # GHA-040: no timeout-minutes
+
+  unscoped_job:
+    # no permissions block — confirms GHA-011 (workflow-level) fires
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "hello"
