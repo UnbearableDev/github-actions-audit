@@ -1,0 +1,14 @@
+runtime: external
+type: streamable-http
+url: https://unbearable-dev--github-actions-audit.apify.actor/mcp
+auth:
+  type: bearer
+  description: Apify API token (any Apify user can generate one in their console)
+metadata:
+  name: github-actions-audit
+  display_name: GitHub Actions Audit
+  description: Static security audit for GitHub Actions workflows — 13 checks across 5 categories, MCP-native
+  tags: [github-actions, ci-cd, security, audit, devops, workflow, supply-chain, static-analysis, mcp]
+  license: MIT
+  publisher: unbearabledev
+  homepage: https://github.com/UnbearableDev/github-actions-audit

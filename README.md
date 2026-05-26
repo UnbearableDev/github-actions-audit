@@ -6,6 +6,17 @@
 
 ---
 
+## Available on
+
+- [Apify Actor Store](https://apify.com/unbearable_dev/github-actions-audit) — primary, metered usage (PPE)
+- MCPize — *pending submission*
+- MCP.so — *pending submission*
+- PulseMCP — *pending submission*
+- Smithery — *pending submission*
+- Glama — *pending submission*
+
+**Newsletter:** [Unbearable TechTips Weekly](https://unbearabletechtips.com) · **All Actors:** [github.com/UnbearableDev](https://github.com/UnbearableDev)
+
 ## What it does
 
 Point any MCP-capable client (Claude Desktop, Cursor, n8n, Make, Zapier, custom agents) at this server, hand it a workflow YAML, and get back structured findings with:
