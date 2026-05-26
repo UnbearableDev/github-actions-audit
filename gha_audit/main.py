@@ -134,35 +134,45 @@ def get_server() -> FastMCP:
 
     @server.tool()
     async def audit_workflow(
-        workflow_yaml: str | None = None,
+        workflow_content: str | None = None,
         workflow_url: str | None = None,
         min_severity: Severity = DEFAULT_MIN_SEVERITY,
+        workflow_yaml: str | None = None,
     ) -> dict[str, Any]:
         """Run the full security audit against a GitHub Actions workflow.
 
-        Provide exactly one of `workflow_yaml` (paste the YAML content) or
+        Provide exactly one of `workflow_content` (paste the YAML content) or
         `workflow_url` (HTTPS URL — e.g. a GitHub raw URL to a single
         `.github/workflows/*.yml` file). Returns findings with severity,
         affected job/step, remediation text, and a YAML fix snippet.
 
         Args:
-            workflow_yaml: The workflow YAML content as a string.
+            workflow_content: The workflow YAML content as a string (primary param).
             workflow_url: HTTPS URL to a workflow file (5s timeout, 500KB cap).
             min_severity: Drop findings below this severity. One of 'info', 'low', 'medium', 'high'. Default 'low'.
+            workflow_yaml: Deprecated alias for workflow_content. Accepted for one release cycle.
         """
-        return await _run_audit(workflow_yaml, workflow_url, min_severity, None)
+        if workflow_content and workflow_yaml:
+            return _error_response("Provide workflow_content or workflow_yaml (alias), not both.")
+        resolved_content = workflow_content or workflow_yaml
+        return await _run_audit(resolved_content, workflow_url, min_severity, None)
 
     def _make_category_tool(category: str):
         async def _tool(
-            workflow_yaml: str | None = None,
+            workflow_content: str | None = None,
             workflow_url: str | None = None,
             min_severity: Severity = DEFAULT_MIN_SEVERITY,
+            workflow_yaml: str | None = None,
         ) -> dict[str, Any]:
-            return await _run_audit(workflow_yaml, workflow_url, min_severity, category)
+            if workflow_content and workflow_yaml:
+                return _error_response("Provide workflow_content or workflow_yaml (alias), not both.")
+            resolved_content = workflow_content or workflow_yaml
+            return await _run_audit(resolved_content, workflow_url, min_severity, category)
         _tool.__name__ = f"check_{category}"
         _tool.__doc__ = (
             f"Run only the {category} checks against a workflow.\n\n"
-            "Args: workflow_yaml or workflow_url, min_severity (default 'low')."
+            "Args: workflow_content (primary), workflow_yaml (deprecated alias), "
+            "workflow_url, min_severity (default 'low')."
         )
         return _tool
 
