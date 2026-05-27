@@ -6,9 +6,9 @@ from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-Severity = Literal["high", "medium", "low", "info"]
+Severity = Literal["critical", "high", "medium", "low", "info"]
 
-SEVERITY_RANK: dict[Severity, int] = {"info": 0, "low": 1, "medium": 2, "high": 3}
+SEVERITY_RANK: dict[Severity, int] = {"info": 0, "low": 1, "medium": 2, "high": 3, "critical": 4}
 
 
 @dataclass

@@ -27,8 +27,9 @@ async def audit_file(label: str, path: Path):
     print(f"  by category: {summary['by_category']}")
     print()
 
+    from gha_audit.findings import SEVERITY_RANK
     for f in sorted(findings, key=lambda x: (
-        -{"high": 3, "medium": 2, "low": 1, "info": 0}[x.severity],
+        -SEVERITY_RANK.get(x.severity, 0),
         x.id,
         x.job or "",
     )):

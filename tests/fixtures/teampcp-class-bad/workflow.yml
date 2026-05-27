@@ -1,0 +1,46 @@
+# Intentionally bad workflow — triggers all 8 GHA-20x supply_chain_advanced checks.
+name: TeamPCP Class Bad Pipeline
+
+on:
+  pull_request_target:
+    branches: [main]
+
+# Top-level write perms, no per-job scoping — GHA-206
+permissions:
+  contents: write
+
+jobs:
+  exploit_surface:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      # GHA-201: first-party action pinned to @main branch ref
+      - uses: actions/checkout@main
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}   # GHA-203 (prt + head checkout)
+
+      # GHA-202: third-party action pinned to mutable major tag
+      - uses: tj-actions/changed-files@v41
+
+      # GHA-208: actions/checkout@v1 (known-retired)
+      - uses: actions/setup-node@v1
+
+      # GHA-204: commit-message injection into run:
+      - name: Print commit message
+        run: |
+          MSG="${{ github.event.head_commit.message }}"
+          echo "Commit: $MSG"
+
+      # GHA-205: non-allowlisted owner (some-random-org)
+      - uses: some-random-org/deploy-action@abc1234def5678ab9012cdef3456ab7890123456
+
+      # GHA-207: secret logged via echo
+      - name: Debug token
+        run: |
+          echo "${{ secrets.DEPLOY_TOKEN }}"
+
+  read_only_job:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - run: echo "no perms override, inherits top-level write"

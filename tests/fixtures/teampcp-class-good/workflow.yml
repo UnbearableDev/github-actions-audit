@@ -1,0 +1,42 @@
+# Clean workflow that passes all 8 GHA-20x supply_chain_advanced checks.
+name: TeamPCP Class Clean Pipeline
+
+on:
+  pull_request:
+    branches: [main]
+
+# Restrictive top-level permissions — GHA-206 passes
+permissions: read-all
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      # SHA-pinned first-party action — GHA-201 and GHA-202 pass
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # v4.1.1
+
+      # SHA-pinned, not retired — GHA-208 passes
+      - name: Setup Node
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8  # v4.0.2
+
+      # SHA-pinned, trusted owner (actions) — GHA-205 passes
+      - name: Setup Python
+        uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236  # v4.7.1
+
+      # Commit message via env: — GHA-204 passes (no direct interpolation in run:)
+      - name: Print info safely
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          echo "Commit: $COMMIT_MSG"
+
+      # Secret via env: not echoed directly — GHA-207 passes
+      - name: Use token
+        env:
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+        run: |
+          curl -H "Authorization: Bearer $DEPLOY_TOKEN" https://api.example.com/deploy

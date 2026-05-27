@@ -21,7 +21,7 @@
 
 Point any MCP-capable client (Claude Desktop, Cursor, n8n, Make, Zapier, custom agents) at this server, hand it a workflow YAML, and get back structured findings with:
 
-- **Severity** — high / medium / low / info
+- **Severity** — critical / high / medium / low / info
 - **Affected job and step** — exact location of the problem
 - **Description** — why it matters, with the actual attack vector
 - **Remediation** — what to do about it
@@ -37,11 +37,12 @@ Point any MCP-capable client (Claude Desktop, Cursor, n8n, Make, Zapier, custom 
 | `check_action_pinning(...)` | Action version-pinning only |
 | `check_runner_security(...)` | Self-hosted runner + script injection |
 | `check_workflow_config(...)` | Timeout / config hygiene |
+| `check_supply_chain_advanced(...)` | TeamPCP-class supply-chain patterns (GHA-201..208) |
 | `list_checks(category?)` | Browse the catalog |
 
 Provide exactly one of `workflow_yaml` (paste the content) or `workflow_url` (HTTPS URL — typically a GitHub raw URL to a specific workflow file).
 
-## Check catalog (v1: 13 checks)
+## Check catalog (v2: 21 checks)
 
 | ID | Category | Severity | Title |
 |----|----------|----------|-------|
@@ -58,6 +59,14 @@ Provide exactly one of `workflow_yaml` (paste the content) or `workflow_url` (HT
 | GHA-030 | runner_security | medium | Self-hosted runner used on `pull_request` from forks |
 | GHA-032 | runner_security | high | Script injection via untrusted `github.event.*` interpolation |
 | GHA-040 | workflow_config | low | No `timeout-minutes` on job |
+| GHA-201 | supply_chain_advanced | high | Action pinned to unpinned branch ref (TeamPCP-class: @main/@master) |
+| GHA-202 | supply_chain_advanced | high | Action pinned to mutable tag — SHA pin recommended |
+| GHA-203 | supply_chain_advanced | critical | `pull_request_target` + checkout of PR head SHA/ref (codecov/tj-actions exploitation path) |
+| GHA-204 | supply_chain_advanced | high | Script injection via `github.event.*` user-controlled field in `run:` |
+| GHA-205 | supply_chain_advanced | medium | Action from non-allowlisted owner (untrusted 3rd-party) |
+| GHA-206 | supply_chain_advanced | high | Top-level `permissions: write-all` or `contents: write` without per-job scoping |
+| GHA-207 | supply_chain_advanced | medium | Secret logged via `echo` / `cat` in `run:` block |
+| GHA-208 | supply_chain_advanced | low | Action uses a known-retired tag |
 
 ## Pricing
 

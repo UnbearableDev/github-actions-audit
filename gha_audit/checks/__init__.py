@@ -6,7 +6,7 @@ from collections.abc import Callable, Iterable
 
 from gha_audit.findings import Finding, WorkflowDoc
 
-from . import action_pinning, permissions, runner_security, secrets, workflow_config
+from . import action_pinning, permissions, runner_security, secrets, supply_chain_advanced, workflow_config
 
 CheckFn = Callable[[WorkflowDoc], Iterable[Finding]]
 
@@ -16,6 +16,7 @@ CATEGORY_REGISTRY: dict[str, list[CheckFn]] = {
     "action_pinning": action_pinning.CHECKS,
     "runner_security": runner_security.CHECKS,
     "workflow_config": workflow_config.CHECKS,
+    "supply_chain_advanced": supply_chain_advanced.CHECKS,
 }
 
 ALL_CATEGORIES: list[str] = list(CATEGORY_REGISTRY.keys())
