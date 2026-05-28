@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- github-actions-audit: N4 highlighted (bottom-left), accent #8B5CF6 (violet) -->
+  <rect width="200" height="200" rx="31" fill="#0F172A"/>
+  <!-- Edges: N2→N4 active cyan, rest inactive -->
+  <line x1="100" y1="100" x2="56" y2="56" stroke="#475569" stroke-width="5" stroke-linecap="round"/>
+  <line x1="100" y1="100" x2="144" y2="63" stroke="#475569" stroke-width="5" stroke-linecap="round"/>
+  <line x1="100" y1="100" x2="69" y2="150" stroke="#06B6D4" stroke-width="6" stroke-linecap="round"/>
+  <line x1="100" y1="100" x2="150" y2="144" stroke="#475569" stroke-width="5" stroke-linecap="round"/>
+  <!-- N1 inactive -->
+  <circle cx="56" cy="56" r="13" fill="#F8FAFC"/>
+  <!-- N2 center inactive -->
+  <circle cx="100" cy="100" r="13" fill="#F8FAFC"/>
+  <!-- N3 inactive -->
+  <circle cx="144" cy="63" r="13" fill="#F8FAFC"/>
+  <!-- N4 highlighted (69,150): r=16, violet fill, ink inner ring -->
+  <circle cx="69" cy="150" r="16" fill="#8B5CF6"/>
+  <circle cx="69" cy="150" r="7" fill="#0F172A"/>
+  <!-- N5 inactive -->
+  <circle cx="150" cy="144" r="13" fill="#F8FAFC"/>
+  <!-- YAML-style workflow bracket: two vertical lines + horizontal connectors (top-right area) -->
+  <line x1="128" y1="42" x2="128" y2="90" stroke="#8B5CF6" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+  <line x1="128" y1="52" x2="158" y2="52" stroke="#8B5CF6" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+  <line x1="128" y1="66" x2="158" y2="66" stroke="#8B5CF6" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+  <line x1="128" y1="80" x2="158" y2="80" stroke="#8B5CF6" stroke-width="3" stroke-linecap="round" opacity="0.4"/>
+  <!-- Gear-tooth suggestion: small circle with tick marks at N3 position area -->
+  <circle cx="158" cy="44" r="10" fill="none" stroke="#8B5CF6" stroke-width="3" opacity="0.6"/>
+  <circle cx="158" cy="44" r="5" fill="#8B5CF6" opacity="0.5"/>
+</svg>
