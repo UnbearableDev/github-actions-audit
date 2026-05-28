@@ -3,7 +3,7 @@
 	"actorSpecification": 1,
 	"name": "github-actions-audit",
 	"title": "GitHub Actions Security Audit",
-	"description": "Audits .github/workflows/*.yml for supply-chain risks: script injection, leaked tokens, unpinned actions, broad permissions, pull_request_target pitfalls. MCP-native \u2014 call from Claude Desktop, Cursor, n8n, or any MCP client. Pay-per-event. Built by Unbearable TechTips.",
+	"description": "Audits .github/workflows/*.yml for supply-chain risks: script injection, leaked tokens, unpinned actions, broad permissions, pull_request_target pitfalls. MCP-native — call from Claude Desktop, Cursor, n8n, or any MCP client. Pay-per-event. Built by Unbearable TechTips.",
 	"version": "0.2",
 	"buildTag": "latest",
 	"usesStandbyMode": true,
@@ -13,12 +13,16 @@
 	},
 	"input": {
 		"title": "Actor input schema",
-		"description": "MCP server runs in Standby mode \u2014 input is supplied via MCP tool calls, not Actor input.",
+		"description": "MCP server runs in Standby mode — input is supplied via MCP tool calls, not Actor input.",
 		"type": "object",
 		"schemaVersion": 1,
 		"properties": {},
 		"required": []
 	},
 	"dockerfile": "../Dockerfile",
-	"webServerMcpPath": "/mcp"
+	"webServerMcpPath": "/mcp",
+	"categories": [
+		"DEVELOPER_TOOLS",
+		"SECURITY"
+	]
 }

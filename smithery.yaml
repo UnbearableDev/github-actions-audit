@@ -12,3 +12,13 @@ metadata:
   license: MIT
   publisher: unbearabledev
   homepage: https://github.com/UnbearableDev/github-actions-audit
+workflow_prompts:
+  - name: audit_workflow_local
+    description: Full security audit of a GitHub Actions workflow YAML pasted as text. Catches injection, leaked tokens, unpinned actions, and broad permissions.
+    prompt: Audit my GitHub Actions workflow for security issues. Here is the content: <paste workflow YAML here>
+  - name: audit_workflow_url
+    description: Full audit fetched from a GitHub raw URL. Ideal for CI review of a specific workflow file before merge.
+    prompt: Audit the GitHub Actions workflow at this raw URL for security issues: https://raw.githubusercontent.com/<owner>/<repo>/main/.github/workflows/ci.yml
+  - name: list_checks
+    description: Browse the full check catalog or filter by category. Useful to understand what the Actor covers before running an audit.
+    prompt: What security checks does the github-actions-audit MCP support? List all checks grouped by category.
