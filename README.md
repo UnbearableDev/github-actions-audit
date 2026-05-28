@@ -2,7 +2,7 @@
 
 > MCP server that audits `.github/workflows/*.yml` files for supply-chain risks. Catches script injection, leaked tokens, unpinned actions, broad permissions, and `pull_request_target` foot-guns — the patterns behind several 2024–2025 supply-chain incidents.
 
-**Built by [Unbearable TechTips](https://github.com/UnbearableDev).** Pay-per-event — only billed when a tool is actually called.
+**Built by [Unbearable Labs](https://github.com/UnbearableDev).** Pay-per-event — only billed when a tool is actually called.
 
 ---
 
@@ -88,7 +88,7 @@ Provide exactly one of `workflow_yaml` (paste the content) or `workflow_url` (HT
 }
 ```
 
-## Sibling MCPs from Unbearable TechTips
+## Sibling MCPs from Unbearable Labs
 
 - **[`docker-compose-audit`](https://apify.com/unbearable_dev/docker-compose-audit)** — `docker-compose.yml` security audit
 - **[`dockerfile-audit`](https://apify.com/unbearable_dev/dockerfile-audit)** — Dockerfile security & quality
