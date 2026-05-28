@@ -11,6 +11,7 @@ metadata:
   tags: [github-actions, ci-cd, security, audit, devops, workflow, supply-chain, static-analysis, mcp]
   license: MIT
   publisher: unbearabledev
+  icon: icon.svg
   homepage: https://github.com/UnbearableDev/github-actions-audit
 workflow_prompts:
   - name: audit_workflow_local
