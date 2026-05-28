@@ -26,6 +26,13 @@ from gha_audit.parser import WorkflowInputError, resolve_workflow_input
 Severity = Literal["high", "medium", "low", "info"]
 DEFAULT_MIN_SEVERITY: Severity = "low"
 
+_ANNOTATIONS = {
+    "readOnlyHint": True,
+    "destructiveHint": False,
+    "idempotentHint": True,
+    "openWorldHint": False,
+}
+
 
 LANDING_HTML = """<!doctype html>
 <html lang="en">
@@ -132,7 +139,7 @@ def get_server() -> FastMCP:
         )
         return _findings_to_response(findings, doc, label)
 
-    @server.tool()
+    @server.tool(annotations=_ANNOTATIONS)
     async def audit_workflow(
         workflow_content: str | None = None,
         workflow_url: str | None = None,
@@ -177,9 +184,9 @@ def get_server() -> FastMCP:
         return _tool
 
     for category in check_registry.ALL_CATEGORIES:
-        server.tool()(_make_category_tool(category))
+        server.tool(annotations=_ANNOTATIONS)(_make_category_tool(category))
 
-    @server.tool()
+    @server.tool(annotations=_ANNOTATIONS)
     async def list_checks(category: str | None = None) -> dict[str, Any]:
         """List the full catalog of available checks."""
         await Actor.charge("list-checks")
