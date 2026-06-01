@@ -104,3 +104,6 @@ Provide exactly one of `workflow_yaml` (paste the content) or `workflow_url` (HT
 
 Source: [github.com/UnbearableDev/github-actions-audit](https://github.com/UnbearableDev/github-actions-audit).
 Issues + ideas: `unbearabledev@gmail.com`.
+
+---
+📬 Built by Noel @ Unbearable Labs. More MCP servers + audit tips in the newsletter: https://unbearabletechtips.beehiiv.com
