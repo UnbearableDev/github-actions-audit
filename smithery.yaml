@@ -1,4 +1,4 @@
-runtime: external
+﻿runtime: external
 type: streamable-http
 url: https://unbearable-dev--github-actions-audit.apify.actor/mcp
 auth:
@@ -7,7 +7,7 @@ auth:
 metadata:
   name: github-actions-audit
   display_name: GitHub Actions Audit
-  description: Static security audit for GitHub Actions workflows — 13 checks across 5 categories, MCP-native
+  description: Static security audit for GitHub Actions workflows — 21 checks across 6 categories, MCP-native
   tags: [github-actions, ci-cd, security, audit, devops, workflow, supply-chain, static-analysis, mcp]
   license: MIT
   publisher: unbearabledev

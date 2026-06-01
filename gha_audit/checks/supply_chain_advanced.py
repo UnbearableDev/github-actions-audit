@@ -1,4 +1,4 @@
-"""Supply-chain advanced checks — TeamPCP-class patterns (GHA-201 to GHA-208)."""
+﻿"""Supply-chain advanced checks — TeamPCP-class patterns (GHA-201 to GHA-208)."""
 
 from __future__ import annotations
 
@@ -47,7 +47,17 @@ RETIRED_REFS: dict[str, set[str]] = {
 }
 
 # Default owner allowlist for GHA-205
-DEFAULT_TRUSTED_OWNERS = {"actions", "github", "docker", "step-security", "aquasecurity"}
+DEFAULT_TRUSTED_OWNERS = {
+    "actions",
+    "github",
+    "docker",
+    "step-security",
+    "aquasecurity",
+    "sigstore",
+    "trufflesecurity",
+    "anchore",
+    "slsa-framework",
+}
 
 
 def _parse_uses(uses: str) -> tuple[str, str, str] | None:

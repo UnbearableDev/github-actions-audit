@@ -1,4 +1,4 @@
-"""Unit tests for supply_chain_advanced checks (GHA-201 to GHA-208)."""
+﻿"""Unit tests for supply_chain_advanced checks (GHA-201 to GHA-208)."""
 
 from __future__ import annotations
 
@@ -276,6 +276,79 @@ jobs:
       - uses: aquasecurity/trivy-action@c3a14e5b85a09f2f58c73e14c7f30bfab4c5de2b
 """
     assert "GHA-205" not in ids(run(yaml))
+
+
+def test_gha205_does_not_fire_on_sigstore_sha_pinned():
+    yaml = """
+on: push
+jobs:
+  j:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: sigstore/cosign-installer@11086d25041f77fe8fe7b9ea4e48e3b9192b8f19
+"""
+    assert "GHA-205" not in ids(run(yaml))
+
+
+def test_gha205_does_not_fire_on_aquasecurity_sha_pinned():
+    yaml = """
+on: push
+jobs:
+  j:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: aquasecurity/trivy-action@c3a14e5b85a09f2f58c73e14c7f30bfab4c5de2b
+"""
+    assert "GHA-205" not in ids(run(yaml))
+
+
+def test_gha205_does_not_fire_on_trufflesecurity_sha_pinned():
+    yaml = """
+on: push
+jobs:
+  j:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: trufflesecurity/trufflehog@244b6096ee99e2e9e82f3bc7def800c61e89a977
+"""
+    assert "GHA-205" not in ids(run(yaml))
+
+
+def test_gha205_does_not_fire_on_anchore_sha_pinned():
+    yaml = """
+on: push
+jobs:
+  j:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: anchore/scan-action@3343887d815d7b07465f6fdcd395bd66508d486a
+"""
+    assert "GHA-205" not in ids(run(yaml))
+
+
+def test_gha205_does_not_fire_on_slsa_framework_sha_pinned():
+    yaml = """
+on: push
+jobs:
+  j:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.4.0
+"""
+    assert "GHA-205" not in ids(run(yaml))
+
+
+def test_gha205_still_fires_on_untrusted_vendor_sha_pinned():
+    """SHA-pinned but unknown owner — GHA-205 should still fire."""
+    yaml = """
+on: push
+jobs:
+  j:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: randovendor/sketchy-action@abc1234def5678ab9012cdef3456ab7890123456
+"""
+    assert "GHA-205" in ids(run(yaml))
 
 
 # ── GHA-206: top-level write perms without per-job scoping ───────────────────
