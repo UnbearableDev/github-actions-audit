@@ -8,14 +8,29 @@ from gha_audit.findings import Finding, WorkflowDoc, check_meta
 
 CATEGORY = "permissions"
 
+# GitHub's full set of GITHUB_TOKEN permission scopes.
+_ALL_TOKEN_SCOPES = frozenset({
+    "actions", "attestations", "checks", "contents", "deployments",
+    "discussions", "id-token", "issues", "packages", "pages",
+    "pull-requests", "repository-projects", "security-events", "statuses",
+})
+
 
 def _permissions_is_write_all(perms) -> bool:
-    """`permissions: write-all` or all subkeys set to write."""
+    """True only for a genuine grant of write to *every* scope.
+
+    Either `permissions: write-all` (string form), or a mapping that explicitly
+    sets `write` on (essentially) all known GITHUB_TOKEN scopes. A job that
+    enumerates a handful of specific write scopes (e.g. a release job needing
+    contents / attestations / id-token) is least-privilege, NOT write-all, and
+    must not be flagged here.
+    """
     if perms == "write-all":
         return True
-    if not isinstance(perms, dict):
+    if not isinstance(perms, dict) or not perms:
         return False
-    return all(v == "write" for v in perms.values()) and bool(perms)
+    write_scopes = {k for k, v in perms.items() if v == "write"}
+    return _ALL_TOKEN_SCOPES.issubset(write_scopes)
 
 
 @check_meta(id="GHA-010", severity="high", title="`permissions: write-all` granted")
@@ -85,7 +100,7 @@ def check_no_top_level_permissions(doc: WorkflowDoc) -> Iterable[Finding]:
             "Workflow has no top-level `permissions:` and not every job overrides "
             "it. `GITHUB_TOKEN` issued to this workflow inherits the repository's "
             "default token permission — for repos created before Feb 2023 this is "
-            "`write-all`. A compromised step gets full repo write access."
+            "`write-all`. A compromised step in any job gets full repo write access."
         ),
         remediation=(
             "Add `permissions: read-all` at the top of the workflow (or "
@@ -144,22 +159,22 @@ def check_pull_request_target_with_checkout(doc: WorkflowDoc) -> Iterable[Findin
                 description=(
                     f"Job '{jname}', step '{step_name}': the workflow triggers on "
                     "`pull_request_target` (which runs with the BASE repo's "
-                    "secrets/permissions) AND checks out the PR head ref — that's "
+                    "secrets/permissions) AND checks out the PR head ref -- that's "
                     "untrusted fork code. A malicious PR can run arbitrary code "
                     "with full base-repo token permissions. This is the pattern "
-                    "behind several 2024–2025 supply-chain incidents."
+                    "behind several 2024-2025 supply-chain incidents."
                 ),
                 remediation=(
                     "Either: (a) switch the trigger to `pull_request` (which runs "
                     "with PR-fork's reduced permissions) and accept fewer secrets "
                     "access, or (b) keep `pull_request_target` but DO NOT check "
-                    "out the PR head — only the base branch."
+                    "out the PR head -- only the base branch."
                 ),
                 fix_yaml_snippet=(
-                    "# Option A — safer trigger:\n"
+                    "# Option A -- safer trigger:\n"
                     "on:\n"
                     "  pull_request:\n"
-                    "# Option B — keep trigger, don't checkout head:\n"
+                    "# Option B -- keep trigger, don't checkout head:\n"
                     "      - uses: actions/checkout@<sha>  # NO `ref:` arg"
                 ),
                 references=["GHA-pull_request_target-Risk"],
