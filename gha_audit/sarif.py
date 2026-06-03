@@ -93,24 +93,37 @@ def _build_rules() -> list[dict[str, Any]]:
 
 
 def _build_location(finding: Finding, workflow_path: str) -> dict[str, Any]:
-    """Build a SARIF physicalLocation. Uses line_number when present."""
+    """Build a SARIF physicalLocation.
+
+    Uses real line/column numbers from ruamel.yaml source positions when present.
+    Falls back to startLine=1 ONLY for genuinely file-level findings where no
+    source node is locatable (e.g. GHA-011: missing top-level permissions block).
+
+    SARIF requires startLine >= 1 (per spec section 3.30.2).
+    """
     artifact_location: dict[str, Any] = {
         "uri": workflow_path,
         "uriBaseId": "%SRCROOT%",
     }
 
-    # line_number is defined in Finding but no current check populates it.
-    # When present, emit a precise region. When absent (current state),
-    # fall back to line 1 — SARIF requires a location; GitHub code scanning
-    # accepts file-level annotations at line 1 and displays them as file-level alerts.
-    line = finding.line_number if finding.line_number is not None else 1
+    region: dict[str, Any] = {}
+
+    if finding.line_number is not None:
+        # Real source position — emit precise region
+        region["startLine"] = finding.line_number
+        if finding.column_number is not None:
+            region["startColumn"] = finding.column_number
+        else:
+            region["startColumn"] = 1
+    else:
+        # Genuinely file-level: no locatable node (e.g. absent permissions block)
+        # SARIF requires a location; line 1 signals file-level to GitHub code scanning.
+        region["startLine"] = 1
+        region["startColumn"] = 1
 
     physical: dict[str, Any] = {
         "artifactLocation": artifact_location,
-        "region": {
-            "startLine": line,
-            "startColumn": 1,
-        },
+        "region": region,
     }
 
     location: dict[str, Any] = {"physicalLocation": physical}
@@ -150,6 +163,8 @@ def _finding_to_result(finding: Finding, workflow_path: str) -> dict[str, Any]:
     # alongside the finding. We cannot emit a real artifactChange without
     # byte-offset knowledge, so we describe it in text.
     if finding.fix_yaml_snippet:
+        # Use the finding's own line as the related location anchor when known
+        fix_line = finding.line_number if finding.line_number is not None else 1
         result["relatedLocations"] = [
             {
                 "id": 1,
@@ -161,7 +176,7 @@ def _finding_to_result(finding: Finding, workflow_path: str) -> dict[str, Any]:
                         "uri": workflow_path,
                         "uriBaseId": "%SRCROOT%",
                     },
-                    "region": {"startLine": 1, "startColumn": 1},
+                    "region": {"startLine": fix_line, "startColumn": 1},
                 },
             }
         ]

@@ -1,17 +1,25 @@
-"""Input resolution + YAML parsing for GitHub Actions workflows."""
+"""Input resolution + YAML parsing for GitHub Actions workflows.
+
+Uses ruamel.yaml in round-trip mode so every node carries source-position
+info (.lc attribute) for precise SARIF line annotations.
+"""
 
 from __future__ import annotations
 
 import io
 
 import httpx
-import yaml
+from ruamel.yaml import YAML
 
 from gha_audit.findings import WorkflowDoc
 
 MAX_BYTES = 500_000  # 500 KB cap
 FETCH_TIMEOUT = httpx.Timeout(5.0)
 MAX_REDIRECTS = 3
+
+# Module-level ruamel instance (thread-safe for reading)
+_yaml = YAML(typ="rt")
+_yaml.preserve_quotes = True
 
 
 class WorkflowInputError(ValueError):
@@ -60,8 +68,8 @@ def _parse(text: str) -> WorkflowDoc:
         raise WorkflowInputError("Workflow YAML is empty.")
 
     try:
-        loaded = yaml.safe_load(io.StringIO(text))
-    except yaml.YAMLError as e:
+        loaded = _yaml.load(io.StringIO(text))
+    except Exception as e:
         raise WorkflowInputError(f"Invalid YAML: {e}") from e
 
     if loaded is None:
@@ -71,8 +79,9 @@ def _parse(text: str) -> WorkflowDoc:
             f"Expected a YAML mapping at top level, got {type(loaded).__name__}."
         )
 
-    # YAML 1.1 boolean-aliasing: GitHub Actions uses `on:` as a key, which
-    # PyYAML's default loader parses as the boolean True. Fix it back to "on".
+    # YAML 1.1 boolean-aliasing: ruamel.yaml in round-trip mode correctly
+    # preserves "on:" as the string key "on" — no fixup needed. But guard
+    # defensively in case an old serialized form sneaks through.
     if True in loaded:
         loaded["on"] = loaded.pop(True)
 

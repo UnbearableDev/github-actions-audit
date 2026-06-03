@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from collections.abc import Iterable
 
-from gha_audit.findings import Finding, WorkflowDoc, check_meta
+from gha_audit.findings import Finding, WorkflowDoc, check_meta, node_line, node_col
 
 CATEGORY = "action_pinning"
 
@@ -54,6 +54,8 @@ def check_third_party_tag_pin(doc: WorkflowDoc) -> Iterable[Finding]:
             severity="high",
             job=jname,
             step=step_name,
+            line_number=node_line(step, "uses"),
+            column_number=node_col(step, "uses"),
             title=f"Third-party action `{owner}/{repo}` pinned by tag, not SHA",
             description=(
                 f"`uses: {uses}` pins to `{ref!r}`. Third-party action tags are "
@@ -91,6 +93,8 @@ def check_third_party_branch_pin(doc: WorkflowDoc) -> Iterable[Finding]:
             severity="high",
             job=jname,
             step=step_name,
+            line_number=node_line(step, "uses"),
+            column_number=node_col(step, "uses"),
             title=f"Third-party action `{owner}/{repo}` pinned to branch `{ref}`",
             description=(
                 f"`uses: {uses}` pins to a branch ref. Every workflow run pulls "
@@ -125,6 +129,8 @@ def check_first_party_unpinned(doc: WorkflowDoc) -> Iterable[Finding]:
             severity="medium",
             job=jname,
             step=step_name,
+            line_number=node_line(step, "uses"),
+            column_number=node_col(step, "uses"),
             title=f"First-party action `{owner}/{repo}@{ref}` not SHA-pinned",
             description=(
                 f"`uses: {uses}` is from {owner}/* (first-party, lower risk) but "

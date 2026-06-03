@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from collections.abc import Iterable
 
-from gha_audit.findings import Finding, WorkflowDoc, check_meta
+from gha_audit.findings import Finding, WorkflowDoc, check_meta, node_line, node_col
 
 CATEGORY = "secrets"
 
@@ -50,6 +50,8 @@ def check_secret_in_run_unmasked(doc: WorkflowDoc) -> Iterable[Finding]:
                 severity="high",
                 job=jname,
                 step=step_name,
+                line_number=node_line(step, "run"),
+                column_number=node_col(step, "run"),
                 title="Secret interpolated directly into `run:` script",
                 description=(
                     f"Job '{jname}', step '{step_name}': the `run:` block contains "
@@ -91,6 +93,8 @@ def check_secret_echoed(doc: WorkflowDoc) -> Iterable[Finding]:
                 severity="high",
                 job=jname,
                 step=step_name,
+                line_number=node_line(step, "run"),
+                column_number=node_col(step, "run"),
                 title="Secret printed to stdout / set-output",
                 description=(
                     f"Job '{jname}', step '{step_name}': the script appears to "
@@ -122,6 +126,8 @@ def check_secret_in_if(doc: WorkflowDoc) -> Iterable[Finding]:
                 severity="medium",
                 job=jname,
                 step=step_name,
+                line_number=node_line(step, "if"),
+                column_number=node_col(step, "if"),
                 title="Secret used in `if:` condition",
                 description=(
                     f"Job '{jname}', step '{step_name}': `if:` references "
@@ -142,8 +148,10 @@ def check_secret_in_if(doc: WorkflowDoc) -> Iterable[Finding]:
 @check_meta(id="GHA-004", severity="high", title="Hardcoded credential pattern in env:")
 def check_hardcoded_env(doc: WorkflowDoc) -> Iterable[Finding]:
     """Detect literal secret values in env: at job or step level (not ${{ secrets.X }} refs)."""
-    def emit_for(scope_label: str, jname: str, env: dict, step_name: str | None = None):
-        for key, val in env.items():
+    def emit_for(scope_label: str, jname: str, env_node, step_name: str | None = None):
+        if not isinstance(env_node, dict):
+            return
+        for key, val in env_node.items():
             if val is None:
                 continue
             s = str(val).strip()
@@ -163,6 +171,8 @@ def check_hardcoded_env(doc: WorkflowDoc) -> Iterable[Finding]:
                 severity="high",
                 job=jname,
                 step=step_name,
+                line_number=node_line(env_node, key),
+                column_number=node_col(env_node, key),
                 title=f"Hardcoded secret in {scope_label} env: ({key})",
                 description=(
                     f"`env: {key}=<literal>` at {scope_label} level. Workflow YAML "
@@ -178,14 +188,16 @@ def check_hardcoded_env(doc: WorkflowDoc) -> Iterable[Finding]:
             )
 
     for jname, job in doc.iter_jobs():
-        yield from emit_for("job", jname, _job_env(job))
+        job_env_node = job.get("env")
+        yield from emit_for("job", jname, job_env_node)
         steps = job.get("steps") or []
         if isinstance(steps, list):
             for idx, step in enumerate(steps):
                 if not isinstance(step, dict):
                     continue
                 step_name = step.get("name") or f"step #{idx + 1}"
-                yield from emit_for("step", jname, _step_env(step), step_name)
+                step_env_node = step.get("env")
+                yield from emit_for("step", jname, step_env_node, step_name)
 
 
 CHECKS = [

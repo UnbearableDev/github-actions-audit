@@ -4,6 +4,9 @@ apify-client
 fastmcp >= 3.0.0, < 4.0.0
 mcp >= 1.25.0, < 2.0.0
 
-# YAML parsing + HTTP for workflow_url fetching
-PyYAML >= 6.0
+# YAML parsing (round-trip mode preserves source positions for SARIF line annotations)
+# ruamel.yaml CommentedMap/CommentedSeq subclass dict/list — all checks work unchanged.
+ruamel.yaml >= 0.18.0
+
+# HTTP for workflow_url fetching
 httpx >= 0.28.0

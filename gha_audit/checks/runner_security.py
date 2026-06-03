@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from collections.abc import Iterable
 
-from gha_audit.findings import Finding, WorkflowDoc, check_meta
+from gha_audit.findings import Finding, WorkflowDoc, check_meta, node_line, node_col
 
 CATEGORY = "runner_security"
 
@@ -54,6 +54,8 @@ def check_self_hosted_on_pr(doc: WorkflowDoc) -> Iterable[Finding]:
             category=CATEGORY,
             severity="medium",
             job=jname,
+            line_number=node_line(job, "runs-on"),
+            column_number=node_col(job, "runs-on"),
             title=f"Self-hosted runner used on `pull_request` (job '{jname}')",
             description=(
                 f"Job '{jname}' runs on a self-hosted runner (`runs-on: {runs_on}`) "
@@ -90,6 +92,8 @@ def check_script_injection(doc: WorkflowDoc) -> Iterable[Finding]:
                     severity="high",
                     job=jname,
                     step=step_name,
+                    line_number=node_line(step, "run"),
+                    column_number=node_col(step, "run"),
                     title=f"Script injection: `{matched_token}` in `run:` script",
                     description=(
                         f"Job '{jname}', step '{step_name}': the `run:` block "

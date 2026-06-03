@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from gha_audit.findings import Finding, WorkflowDoc, check_meta
+from gha_audit.findings import Finding, WorkflowDoc, check_meta, node_line, node_col
 
 CATEGORY = "workflow_config"
 
@@ -14,6 +14,7 @@ def check_no_timeout(doc: WorkflowDoc) -> Iterable[Finding]:
     """Default job timeout is 360 minutes. A runaway job (or a malicious step
     that's hanging deliberately to consume credits) can burn an absurd amount
     of compute before failing."""
+    jobs_node = doc.raw_jobs_node()
     for jname, job in doc.iter_jobs():
         if job.get("timeout-minutes") is not None:
             continue
@@ -24,11 +25,16 @@ def check_no_timeout(doc: WorkflowDoc) -> Iterable[Finding]:
             for s in steps
         ):
             continue
+        # Point to the job's runs-on or the job key itself in the jobs mapping
+        line = node_line(job, "runs-on") or node_line(jobs_node, jname)
+        col = node_col(job, "runs-on") or node_col(jobs_node, jname)
         yield Finding(
             id="GHA-040",
             category=CATEGORY,
             severity="low",
             job=jname,
+            line_number=line,
+            column_number=col,
             title=f"Job '{jname}' has no `timeout-minutes`",
             description=(
                 f"Job '{jname}' has no `timeout-minutes` set. Default timeout is "

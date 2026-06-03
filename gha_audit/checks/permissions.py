@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from gha_audit.findings import Finding, WorkflowDoc, check_meta
+from gha_audit.findings import Finding, WorkflowDoc, check_meta, node_line, node_col
 
 CATEGORY = "permissions"
 
@@ -41,6 +41,8 @@ def check_write_all(doc: WorkflowDoc) -> Iterable[Finding]:
             id="GHA-010",
             category=CATEGORY,
             severity="high",
+            line_number=node_line(doc.raw, "permissions"),
+            column_number=node_col(doc.raw, "permissions"),
             title="Workflow grants `permissions: write-all`",
             description=(
                 "The workflow's `permissions:` block grants write access to every "
@@ -57,6 +59,7 @@ def check_write_all(doc: WorkflowDoc) -> Iterable[Finding]:
             references=["GHA-Permissions-Docs"],
         )
 
+    jobs_node = doc.raw_jobs_node()
     for jname, job in doc.iter_jobs():
         if _permissions_is_write_all(job.get("permissions")):
             yield Finding(
@@ -64,6 +67,8 @@ def check_write_all(doc: WorkflowDoc) -> Iterable[Finding]:
                 category=CATEGORY,
                 severity="high",
                 job=jname,
+                line_number=node_line(job, "permissions"),
+                column_number=node_col(job, "permissions"),
                 title=f"Job '{jname}' grants `permissions: write-all`",
                 description=(
                     f"Job '{jname}' overrides the workflow permissions with `write-all`. "
@@ -95,6 +100,8 @@ def check_no_top_level_permissions(doc: WorkflowDoc) -> Iterable[Finding]:
         id="GHA-011",
         category=CATEGORY,
         severity="medium",
+        # No specific node to point at — file-level finding
+        line_number=None,
         title="No top-level `permissions:` block",
         description=(
             "Workflow has no top-level `permissions:` and not every job overrides "
@@ -149,12 +156,15 @@ def check_pull_request_target_with_checkout(doc: WorkflowDoc) -> Iterable[Findin
             or "github.head_ref" in ref
         ):
             step_name = step.get("name") or f"step #{idx + 1}"
+            # Point at the `uses:` key of the checkout step
             yield Finding(
                 id="GHA-013",
                 category=CATEGORY,
                 severity="high",
                 job=jname,
                 step=step_name,
+                line_number=node_line(step, "uses"),
+                column_number=node_col(step, "uses"),
                 title="`pull_request_target` + checkout of PR head = code execution risk",
                 description=(
                     f"Job '{jname}', step '{step_name}': the workflow triggers on "

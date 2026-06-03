@@ -1,11 +1,11 @@
-﻿"""Supply-chain advanced checks — TeamPCP-class patterns (GHA-201 to GHA-208)."""
+"""Supply-chain advanced checks — TeamPCP-class patterns (GHA-201 to GHA-208)."""
 
 from __future__ import annotations
 
 import re
 from collections.abc import Iterable
 
-from gha_audit.findings import Finding, WorkflowDoc, check_meta
+from gha_audit.findings import Finding, WorkflowDoc, check_meta, node_line, node_col
 
 CATEGORY = "supply_chain_advanced"
 
@@ -111,6 +111,8 @@ def check_unpinned_branch_ref(doc: WorkflowDoc) -> Iterable[Finding]:
             severity="high",
             job=jname,
             step=step_name,
+            line_number=node_line(step, "uses"),
+            column_number=node_col(step, "uses"),
             title=f"Action `{owner}/{repo}` pinned to mutable branch `@{ref}` (TeamPCP class)",
             description=(
                 f"`uses: {uses}` pins to branch `{ref}`. Every workflow run "
@@ -160,6 +162,8 @@ def check_mutable_tag_pin(doc: WorkflowDoc) -> Iterable[Finding]:
             severity="high",
             job=jname,
             step=step_name,
+            line_number=node_line(step, "uses"),
+            column_number=node_col(step, "uses"),
             title=f"Action `{owner}/{repo}@{ref}` uses mutable tag — convert to SHA",
             description=(
                 f"`uses: {uses}` uses tag `{ref}`. Tags are mutable references: "
@@ -208,12 +212,18 @@ def check_prt_head_checkout(doc: WorkflowDoc) -> Iterable[Finding]:
         if not any(p in ref for p in head_patterns):
             continue
         step_name = step.get("name") or f"step #{idx + 1}"
+        # Point at the `with.ref` key if we can, else the `uses` key
+        with_node = step.get("with")
+        ref_line = node_line(with_node, "ref") if with_node is not None else None
+        ref_col = node_col(with_node, "ref") if with_node is not None else None
         yield Finding(
             id="GHA-203",
             category=CATEGORY,
             severity="critical",
             job=jname,
             step=step_name,
+            line_number=ref_line or node_line(step, "uses"),
+            column_number=ref_col or node_col(step, "uses"),
             title=(
                 f"CRITICAL: `pull_request_target` + `actions/checkout` with PR head ref "
                 f"(job '{jname}') — arbitrary fork code runs with base-repo secrets"
@@ -268,6 +278,8 @@ def check_event_injection_run(doc: WorkflowDoc) -> Iterable[Finding]:
                     severity="high",
                     job=jname,
                     step=step_name,
+                    line_number=node_line(step, "run"),
+                    column_number=node_col(step, "run"),
                     title=f"Script injection: `{matched_token}` interpolated into `run:` (TeamPCP class)",
                     description=(
                         f"Job '{jname}', step '{step_name}': `{matched_token}` is "
@@ -321,6 +333,8 @@ def check_untrusted_owner(doc: WorkflowDoc, trusted_owners: set[str] | None = No
             severity="medium",
             job=jname,
             step=step_name,
+            line_number=node_line(step, "uses"),
+            column_number=node_col(step, "uses"),
             title=f"Action `{owner}/{repo}` is from non-allowlisted owner `{owner}`",
             description=(
                 f"`uses: {uses}` references an action from `{owner}`, which is not "
@@ -377,6 +391,8 @@ def check_top_level_write_permissions(doc: WorkflowDoc) -> Iterable[Finding]:
         id="GHA-206",
         category=CATEGORY,
         severity="high",
+        line_number=node_line(doc.raw, "permissions"),
+        column_number=node_col(doc.raw, "permissions"),
         title="Broad write permissions at workflow level without per-job scoping",
         description=(
             f"The workflow grants `permissions: {perms!r}` at the top level and "
@@ -422,6 +438,8 @@ def check_secret_echo_log(doc: WorkflowDoc) -> Iterable[Finding]:
             severity="medium",
             job=jname,
             step=step_name,
+            line_number=node_line(step, "run"),
+            column_number=node_col(step, "run"),
             title=f"Secret logged via echo/printf/cat in job '{jname}', step '{step_name}'",
             description=(
                 "The `run:` block uses `echo`, `printf`, or `cat` with a "
@@ -473,6 +491,8 @@ def check_retired_tag(doc: WorkflowDoc) -> Iterable[Finding]:
             severity="low",
             job=jname,
             step=step_name,
+            line_number=node_line(step, "uses"),
+            column_number=node_col(step, "uses"),
             title=f"Retired action ref: `{action_key}@{ref}`",
             description=(
                 f"`uses: {uses}` references a known-retired tag `{ref}` of "
