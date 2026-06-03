@@ -22,9 +22,12 @@ from gha_audit.findings import (
     summarize,
 )
 from gha_audit.parser import WorkflowInputError, resolve_workflow_input
+from gha_audit.sarif import findings_to_sarif
 
 Severity = Literal["high", "medium", "low", "info"]
 DEFAULT_MIN_SEVERITY: Severity = "low"
+OutputFormat = Literal["json", "sarif"]
+DEFAULT_OUTPUT_FORMAT: OutputFormat = "json"
 
 _ANNOTATIONS = {
     "readOnlyHint": True,
@@ -83,8 +86,30 @@ LANDING_HTML = """<!doctype html>
 """.encode("utf-8")
 
 
-def _findings_to_response(findings: list[Finding], doc: WorkflowDoc, label: str) -> dict[str, Any]:
+def _findings_to_response(
+    findings: list[Finding],
+    doc: WorkflowDoc,
+    label: str,
+    output_format: OutputFormat = "json",
+    workflow_path: str = ".github/workflows/workflow.yml",
+) -> dict[str, Any]:
     summary = summarize(findings)
+    if output_format == "sarif":
+        import json as _json
+        sarif_doc = findings_to_sarif(
+            findings,
+            workflow_path=workflow_path,
+            workflow_name=doc.name,
+        )
+        sarif_text = _json.dumps(sarif_doc, indent=2)
+        return {
+            "type": "text",
+            "text": (
+                f"{label}: {summary['total_findings']} findings — SARIF 2.1.0 output below.\n\n"
+                f"{sarif_text}"
+            ),
+            "structuredContent": sarif_doc,
+        }
     return {
         "type": "text",
         "text": (
@@ -122,6 +147,8 @@ def get_server() -> FastMCP:
         workflow_url: str | None,
         min_severity: Severity,
         category: str | None,
+        output_format: OutputFormat = "json",
+        workflow_path: str = ".github/workflows/workflow.yml",
     ) -> dict[str, Any]:
         await Actor.charge("audit-call")
         try:
@@ -144,7 +171,7 @@ def get_server() -> FastMCP:
             f"{label}: {len(findings)} findings (min_severity={min_severity}) "
             f"across {len(doc.jobs)} jobs"
         )
-        return _findings_to_response(findings, doc, label)
+        return _findings_to_response(findings, doc, label, output_format, workflow_path)
 
     @server.tool(annotations=_ANNOTATIONS)
     async def audit_workflow(
@@ -152,6 +179,8 @@ def get_server() -> FastMCP:
         workflow_url: str | None = None,
         min_severity: Severity = DEFAULT_MIN_SEVERITY,
         workflow_yaml: str | None = None,
+        output_format: OutputFormat = DEFAULT_OUTPUT_FORMAT,
+        workflow_path: str = ".github/workflows/workflow.yml",
     ) -> dict[str, Any]:
         """Run the full security audit against a GitHub Actions workflow.
 
@@ -165,11 +194,17 @@ def get_server() -> FastMCP:
             workflow_url: HTTPS URL to a workflow file (5s timeout, 500KB cap).
             min_severity: Drop findings below this severity. One of 'info', 'low', 'medium', 'high'. Default 'low'.
             workflow_yaml: Deprecated alias for workflow_content. Accepted for one release cycle.
+            output_format: Output serialization format. 'json' (default) returns structured findings.
+                           'sarif' returns a SARIF 2.1.0 document suitable for upload to GitHub
+                           code scanning (gh api /repos/{owner}/{repo}/code-scanning/sarifs).
+            workflow_path: Repo-relative path to the workflow file used as the artifact URI in
+                           SARIF output (e.g. '.github/workflows/ci.yml'). Only relevant when
+                           output_format='sarif'. Default '.github/workflows/workflow.yml'.
         """
         if workflow_content and workflow_yaml:
             return _error_response("Provide workflow_content or workflow_yaml (alias), not both.")
         resolved_content = workflow_content or workflow_yaml
-        return await _run_audit(resolved_content, workflow_url, min_severity, None)
+        return await _run_audit(resolved_content, workflow_url, min_severity, None, output_format, workflow_path)
 
     def _make_category_tool(category: str):
         async def _tool(
@@ -177,16 +212,20 @@ def get_server() -> FastMCP:
             workflow_url: str | None = None,
             min_severity: Severity = DEFAULT_MIN_SEVERITY,
             workflow_yaml: str | None = None,
+            output_format: OutputFormat = DEFAULT_OUTPUT_FORMAT,
+            workflow_path: str = ".github/workflows/workflow.yml",
         ) -> dict[str, Any]:
             if workflow_content and workflow_yaml:
                 return _error_response("Provide workflow_content or workflow_yaml (alias), not both.")
             resolved_content = workflow_content or workflow_yaml
-            return await _run_audit(resolved_content, workflow_url, min_severity, category)
+            return await _run_audit(resolved_content, workflow_url, min_severity, category, output_format, workflow_path)
         _tool.__name__ = f"check_{category}"
         _tool.__doc__ = (
             f"Run only the {category} checks against a workflow.\n\n"
             "Args: workflow_content (primary), workflow_yaml (deprecated alias), "
-            "workflow_url, min_severity (default 'low')."
+            "workflow_url, min_severity (default 'low'), "
+            "output_format ('json'|'sarif', default 'json'), "
+            "workflow_path (repo-relative path, used as SARIF artifact URI)."
         )
         return _tool
 
