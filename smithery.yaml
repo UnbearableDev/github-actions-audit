@@ -1,4 +1,4 @@
-﻿runtime: external
+runtime: external
 type: streamable-http
 url: https://unbearable-dev--github-actions-audit.apify.actor/mcp
 auth:
