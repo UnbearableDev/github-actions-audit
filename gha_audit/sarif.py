@@ -6,7 +6,10 @@ GitHub code scanning upload: https://docs.github.com/en/code-security/code-scann
 
 from __future__ import annotations
 
+import json
+import os
 import re
+from pathlib import Path
 from typing import Any
 
 from gha_audit import checks as check_registry
@@ -16,7 +19,36 @@ from gha_audit.findings import Finding, Severity
 SARIF_SCHEMA = "https://json.schemastore.org/sarif-2.1.0.json"
 SARIF_VERSION = "2.1.0"
 
-ACTOR_VERSION = "0.2.6"
+
+def _resolve_actor_version() -> str:
+    """Return the Actor build number at runtime, never a stale literal.
+
+    Resolution order:
+    1. APIFY_ACTOR_BUILD_NUMBER env var — set by the Apify platform on every run
+       (e.g. "0.2.8").
+    2. version field from .actor/actor.json — major.minor only (e.g. "0.2");
+       used in local/smoke runs where the platform env var is absent.
+    3. "unknown" — last-resort fallback so SARIF output is never broken.
+    """
+    build_num = os.environ.get("APIFY_ACTOR_BUILD_NUMBER")
+    if build_num:
+        return build_num
+
+    # Walk up from this file to find .actor/actor.json
+    actor_json = Path(__file__).parent.parent / ".actor" / "actor.json"
+    if actor_json.is_file():
+        try:
+            data = json.loads(actor_json.read_text(encoding="utf-8"))
+            version = data.get("version")
+            if version:
+                return str(version)
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    return "unknown"
+
+
+ACTOR_VERSION = _resolve_actor_version()
 ACTOR_URI = "https://apify.com/unbearable_dev/github-actions-audit"
 
 # Map our severity levels to SARIF level values
